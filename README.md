@@ -1,0 +1,2 @@
+# gigai
+freelancing automation project
