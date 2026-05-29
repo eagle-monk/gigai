@@ -1,0 +1,976 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GigAI — Freelance Automation HQ</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#08080f;--s1:#0e0e1a;--s2:#13131f;--s3:#1a1a2a;--s4:#222235;
+  --border:#1e1e30;--border2:#2a2a40;
+  --accent:#00e5ff;--green:#00ff88;--purple:#a78bfa;--amber:#fbbf24;--red:#f87171;--pink:#f472b6;
+  --text:#f0f0ff;--muted:#5a5a7a;--muted2:#3a3a55;
+  --mono:'IBM Plex Mono',monospace;--sans:'Inter',sans-serif;
+  --sidebar:220px;
+}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14px;line-height:1.6;overflow:hidden}
+
+/* LAYOUT */
+.app{display:flex;height:100vh}
+.sidebar{width:var(--sidebar);background:var(--s1);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{height:52px;background:var(--s1);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 24px;flex-shrink:0}
+.content{flex:1;overflow-y:auto;padding:28px;background:var(--bg)}
+
+/* SIDEBAR */
+.logo-area{padding:20px 18px 16px;border-bottom:1px solid var(--border)}
+.logo{font-family:var(--mono);font-size:18px;font-weight:600;color:var(--accent);letter-spacing:1px}
+.logo span{color:var(--muted)}
+.logo-sub{font-size:10px;color:var(--muted);font-family:var(--mono);margin-top:2px;letter-spacing:.5px}
+
+.nav-section{padding:16px 10px 8px;font-family:var(--mono);font-size:9px;color:var(--muted2);text-transform:uppercase;letter-spacing:1.5px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 14px;border-radius:6px;margin:1px 8px;cursor:pointer;transition:all .12s;font-size:13px;color:var(--muted);border:1px solid transparent}
+.nav-item:hover{background:var(--s3);color:var(--text)}
+.nav-item.active{background:var(--s3);color:var(--accent);border-color:var(--border2)}
+.nav-icon{font-size:15px;width:18px;text-align:center}
+.nav-badge{margin-left:auto;font-family:var(--mono);font-size:9px;background:rgba(0,229,255,.12);color:var(--accent);border:1px solid rgba(0,229,255,.2);padding:1px 6px;border-radius:3px}
+.nav-badge.green{background:rgba(0,255,136,.1);color:var(--green);border-color:rgba(0,255,136,.2)}
+.nav-badge.amber{background:rgba(251,191,36,.1);color:var(--amber);border-color:rgba(251,191,36,.2)}
+
+.sidebar-bottom{margin-top:auto;padding:16px;border-top:1px solid var(--border)}
+.goal-label{font-family:var(--mono);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;display:flex;justify-content:space-between}
+.goal-bar{height:3px;background:var(--border2);border-radius:2px;overflow:hidden;margin-bottom:8px}
+.goal-fill{height:100%;background:linear-gradient(90deg,var(--green),var(--accent));border-radius:2px;transition:width .8s ease;width:0%}
+.goal-val{font-family:var(--mono);font-size:11px;color:var(--green)}
+
+/* TOPBAR */
+.page-title{font-size:15px;font-weight:600;color:var(--text)}
+.topbar-right{display:flex;align-items:center;gap:14px}
+.live-pill{display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11px;color:var(--green);background:rgba(0,255,136,.06);border:1px solid rgba(0,255,136,.15);padding:4px 12px;border-radius:20px}
+.pulse{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(0,255,136,.5)}50%{box-shadow:0 0 0 5px rgba(0,255,136,0)}}
+.clock{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.earned-badge{font-family:var(--mono);font-size:12px;color:var(--green);background:rgba(0,255,136,.06);border:1px solid rgba(0,255,136,.15);padding:4px 12px;border-radius:4px}
+
+/* PANELS */
+.panel{display:none}.panel.on{display:block}
+
+/* CARDS & GRIDS */
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.card{background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:18px}
+.card-lg{background:var(--s2);border:1px solid var(--border);border-radius:12px;padding:22px}
+
+.kpi{background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:16px 20px}
+.kpi-val{font-family:var(--mono);font-size:28px;font-weight:600;margin-bottom:3px}
+.kpi-lbl{font-size:11px;color:var(--muted);letter-spacing:.3px}
+.kpi-sub{font-size:10px;font-family:var(--mono);margin-top:4px}
+.kpi.c-green .kpi-val{color:var(--green)}
+.kpi.c-accent .kpi-val{color:var(--accent)}
+.kpi.c-purple .kpi-val{color:var(--purple)}
+.kpi.c-amber .kpi-val{color:var(--amber)}
+
+/* SECTION HEADER */
+.sh{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.sh-title{font-family:var(--mono);font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
+
+/* FORM ELEMENTS */
+label.lbl{font-family:var(--mono);font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:5px}
+input.inp,select.inp,textarea.inp{width:100%;background:var(--s3);border:1px solid var(--border2);color:var(--text);padding:9px 12px;border-radius:7px;font-family:var(--sans);font-size:13px;outline:none;transition:border-color .12s}
+input.inp:focus,select.inp:focus,textarea.inp:focus{border-color:var(--accent)}
+textarea.inp{resize:vertical;min-height:90px}
+select.inp option{background:var(--s3)}
+.field{margin-bottom:14px}
+
+/* BUTTONS */
+.btn{font-family:var(--mono);font-size:11px;padding:9px 20px;border-radius:6px;border:none;cursor:pointer;letter-spacing:.3px;transition:all .12s;display:inline-flex;align-items:center;gap:6px}
+.btn-primary{background:var(--accent);color:#000;font-weight:600}
+.btn-primary:hover{opacity:.85}
+.btn-primary:disabled{opacity:.35;cursor:not-allowed}
+.btn-green{background:var(--green);color:#000;font-weight:600}
+.btn-green:hover{opacity:.85}
+.btn-outline{background:transparent;border:1px solid var(--border2);color:var(--muted)}
+.btn-outline:hover{border-color:var(--accent);color:var(--accent)}
+.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--muted);font-size:10px;padding:6px 14px}
+.btn-ghost:hover{border-color:var(--border2);color:var(--text)}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+
+/* TERMINAL */
+.terminal{background:#050510;border:1px solid var(--border2);border-radius:8px;padding:14px;font-family:var(--mono);font-size:11px;color:var(--green);max-height:140px;overflow-y:auto;margin-bottom:16px}
+.tline{margin-bottom:3px;opacity:0;animation:fadein .25s forwards}
+@keyframes fadein{to{opacity:1}}
+.t-m{color:var(--muted)}.t-w{color:var(--amber)}.t-a{color:var(--accent)}.t-t{color:var(--text)}
+
+/* GIG CARDS */
+.gig-list{display:flex;flex-direction:column;gap:8px}
+.gig-card{background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;display:flex;gap:14px;align-items:flex-start;transition:border-color .12s;cursor:default}
+.gig-card:hover{border-color:var(--border2)}
+.score-ring{width:44px;height:44px;border-radius:50%;border:2px solid var(--green);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:13px;font-weight:600;color:var(--green);flex-shrink:0}
+.score-ring.mid{border-color:var(--amber);color:var(--amber)}
+.score-ring.low{border-color:var(--muted);color:var(--muted)}
+.gig-body{flex:1;min-width:0}
+.gig-title{font-size:14px;font-weight:500;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gig-meta{font-family:var(--mono);font-size:10px;color:var(--muted);display:flex;flex-wrap:wrap;gap:8px}
+.gig-reason{font-size:11px;color:var(--muted);margin-top:5px;font-style:italic}
+.gig-right{display:flex;flex-direction:column;align-items:flex-end;gap:8px;flex-shrink:0}
+.gig-price{font-family:var(--mono);font-size:18px;font-weight:600;color:var(--green)}
+.tag{background:var(--s4);border:1px solid var(--border);font-family:var(--mono);font-size:10px;padding:1px 6px;border-radius:3px;color:var(--muted)}
+
+/* PROPOSAL OUTPUT */
+.prop-box{background:var(--s3);border:1px solid var(--accent);border-radius:10px;padding:20px;position:relative;margin-top:12px}
+.prop-text{font-size:13px;line-height:1.95;color:var(--text);white-space:pre-wrap}
+
+/* LOG */
+.log-item{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--s2);border:1px solid var(--border);border-radius:7px;font-size:12px;margin-bottom:6px}
+.log-time{font-family:var(--mono);font-size:10px;color:var(--muted);min-width:52px}
+.log-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+
+/* CHECKLIST */
+.check-item{display:flex;align-items:center;gap:12px;padding:12px 16px;background:var(--s2);border:1px solid var(--border);border-radius:8px;font-size:13px;cursor:pointer;transition:all .12s;margin-bottom:6px}
+.check-item:hover{border-color:var(--border2)}
+.check-item.done{opacity:.55;border-color:var(--green)}
+.check-box{width:18px;height:18px;border-radius:4px;border:1px solid var(--border2);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;transition:all .12s}
+.check-item.done .check-box{background:var(--green);border-color:var(--green);color:#000}
+.check-step{font-family:var(--mono);font-size:10px;color:var(--muted);min-width:48px}
+.check-text{flex:1}
+.cbadge{font-family:var(--mono);font-size:9px;padding:2px 7px;border-radius:3px}
+.cb-now{background:rgba(0,255,136,.1);color:var(--green);border:1px solid rgba(0,255,136,.2)}
+.cb-soon{background:rgba(167,139,250,.1);color:var(--purple);border:1px solid rgba(167,139,250,.2)}
+.cb-later{background:rgba(91,91,122,.1);color:var(--muted);border:1px solid rgba(91,91,122,.2)}
+
+/* PROFILE */
+.avatar{width:56px;height:56px;border-radius:50%;background:var(--s4);border:2px solid var(--accent);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:18px;font-weight:600;color:var(--accent)}
+.skill-chip{display:inline-flex;align-items:center;background:var(--s4);border:1px solid var(--border2);border-radius:4px;font-family:var(--mono);font-size:11px;padding:3px 10px;color:var(--muted);margin:3px}
+
+/* PROGRESS */
+.prog-track{height:4px;background:var(--border2);border-radius:2px;overflow:hidden;margin-top:6px}
+.prog-fill{height:100%;background:var(--green);border-radius:2px;transition:width .8s ease}
+
+/* WORK GENERATOR */
+.work-box{background:var(--s3);border:1px solid var(--border2);border-radius:10px;padding:20px;margin-top:12px}
+.work-text{font-size:13px;line-height:1.85;color:var(--text);white-space:pre-wrap}
+
+.section-divider{height:1px;background:var(--border);margin:24px 0}
+.empty{text-align:center;padding:40px;color:var(--muted);font-family:var(--mono);font-size:12px}
+
+.stat-row{display:flex;justify-content:space-between;font-size:12px;padding:8px 0;border-bottom:1px solid var(--border)}
+.stat-row:last-child{border-bottom:none}
+.stat-label{color:var(--muted)}
+.stat-val{font-family:var(--mono);font-weight:600;color:var(--text)}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+
+/* LOADING SPINNER */
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin .6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* TOOLTIP */
+[title]{cursor:help}
+
+/* RESPONSIVE */
+@media(max-width:900px){
+  .sidebar{width:60px}
+  .logo-area,.nav-section,.nav-item span:not(.nav-icon){display:none}
+  .nav-item{justify-content:center;padding:12px}
+  .sidebar-bottom{display:none}
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="logo-area">
+      <div class="logo">GIG<span>.</span>AI</div>
+      <div class="logo-sub">freelance automation hq</div>
+    </div>
+
+    <div class="nav-section">main</div>
+    <div class="nav-item active" onclick="nav('dashboard',this)">
+      <span class="nav-icon">⚡</span><span>Dashboard</span>
+    </div>
+    <div class="nav-item" onclick="nav('scanner',this)">
+      <span class="nav-icon">🔍</span><span>Job Scanner</span><span class="nav-badge green">AI</span>
+    </div>
+    <div class="nav-item" onclick="nav('proposal',this)">
+      <span class="nav-icon">✍</span><span>Proposal Writer</span><span class="nav-badge">AI</span>
+    </div>
+    <div class="nav-item" onclick="nav('work',this)">
+      <span class="nav-icon">🤖</span><span>Work Generator</span><span class="nav-badge">AI</span>
+    </div>
+
+    <div class="nav-section">account</div>
+    <div class="nav-item" onclick="nav('profile',this)">
+      <span class="nav-icon">👤</span><span>My Profile</span>
+    </div>
+    <div class="nav-item" onclick="nav('setup',this)">
+      <span class="nav-icon">✅</span><span>Setup Checklist</span><span class="nav-badge amber" id="todo-count">10</span>
+    </div>
+    <div class="nav-item" onclick="nav('earnings',this)">
+      <span class="nav-icon">💰</span><span>Earnings</span>
+    </div>
+
+    <div class="sidebar-bottom">
+      <div class="goal-label">
+        <span>monthly goal</span>
+        <span id="sb-pct">0%</span>
+      </div>
+      <div class="goal-bar"><div class="goal-fill" id="sb-fill"></div></div>
+      <div class="goal-val">$<span id="sb-earned">0</span> / $1,000</div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="topbar">
+      <div class="page-title" id="page-title">Dashboard</div>
+      <div class="topbar-right">
+        <div class="earned-badge">💰 Today: $<span id="top-earned">0</span></div>
+        <div class="live-pill"><div class="pulse"></div>system live</div>
+        <div class="clock" id="clock">--:--:--</div>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <div class="panel on" id="p-dashboard">
+        <div class="grid4">
+          <div class="kpi c-green">
+            <div class="kpi-val">$<span id="d-earned">0</span></div>
+            <div class="kpi-lbl">Earned today</div>
+            <div class="kpi-sub" style="color:var(--muted)">Goal: $33/day</div>
+          </div>
+          <div class="kpi c-accent">
+            <div class="kpi-val" id="d-scanned">0</div>
+            <div class="kpi-lbl">Gigs scanned</div>
+            <div class="kpi-sub" style="color:var(--muted)">Target: 30/day</div>
+          </div>
+          <div class="kpi c-purple">
+            <div class="kpi-val" id="d-props">0</div>
+            <div class="kpi-lbl">Proposals sent</div>
+            <div class="kpi-sub" style="color:var(--muted)">Target: 10/day</div>
+          </div>
+          <div class="kpi c-amber">
+            <div class="kpi-val" id="d-wins">0</div>
+            <div class="kpi-lbl">Gigs won</div>
+            <div class="kpi-sub" style="color:var(--muted)">Win rate: —</div>
+          </div>
+        </div>
+
+        <div class="grid2" style="margin-bottom:24px">
+          <div class="card-lg">
+            <div class="sh"><span class="sh-title">monthly progress</span><span style="font-family:var(--mono);font-size:11px;color:var(--green)">$<span id="d-month">0</span> / $1,000</span></div>
+            <div class="prog-track" style="height:6px"><div class="prog-fill" id="d-mprog" style="width:0%"></div></div>
+            <div style="margin-top:14px;display:flex;flex-direction:column;gap:8px">
+              <div class="stat-row"><span class="stat-label">Avg gig value</span><span class="stat-val">$50</span></div>
+              <div class="stat-row"><span class="stat-label">Gigs needed/month</span><span class="stat-val">20</span></div>
+              <div class="stat-row"><span class="stat-label">Proposals/day target</span><span class="stat-val">10</span></div>
+              <div class="stat-row"><span class="stat-label">Expected win rate</span><span class="stat-val">10%</span></div>
+            </div>
+          </div>
+          <div class="card-lg">
+            <div class="sh"><span class="sh-title">activity log</span></div>
+            <div id="d-log">
+              <div class="log-item"><span class="log-time">now</span><span class="log-dot" style="background:var(--green)"></span><span>GigAI system started — ready</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="sh"><span class="sh-title">quick actions</span></div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:24px">
+          <button class="btn btn-primary" onclick="nav('scanner',null);setTimeout(runScan,100)">⚡ auto-scan gigs now</button>
+          <button class="btn btn-outline" onclick="nav('proposal',null)">✍ write a proposal</button>
+          <button class="btn btn-outline" onclick="nav('work',null)">🤖 generate work</button>
+          <button class="btn btn-ghost" onclick="nav('setup',null)">✅ setup checklist</button>
+        </div>
+
+        <div class="sh"><span class="sh-title">pipeline — top gigs awaiting proposals</span></div>
+        <div id="d-pipeline" class="gig-list"><div class="empty">Run the job scanner to populate your pipeline</div></div>
+      </div>
+
+      <!-- JOB SCANNER -->
+      <div class="panel" id="p-scanner">
+        <div class="grid3" style="margin-bottom:16px">
+          <div class="field">
+            <label class="lbl">Niche</label>
+            <select class="inp" id="s-niche">
+              <option value="blog writing and SEO articles">Blog & SEO writing</option>
+              <option value="product descriptions for e-commerce">Product descriptions</option>
+              <option value="copywriting and ad copy">Copywriting & ads</option>
+              <option value="data entry and web research">Data entry & research</option>
+              <option value="Python scripting and automation">Python scripting</option>
+              <option value="proofreading and editing">Proofreading & editing</option>
+              <option value="resume writing and LinkedIn profiles">Resume writing</option>
+              <option value="email marketing copy">Email marketing</option>
+            </select>
+          </div>
+          <div class="field">
+            <label class="lbl">Min Budget ($)</label>
+            <input class="inp" type="number" id="s-budget" value="30" min="5">
+          </div>
+          <div class="field">
+            <label class="lbl">Competition</label>
+            <select class="inp" id="s-comp">
+              <option value="low (under 10 bids) — best win odds">Low — best odds</option>
+              <option value="medium (under 25 bids)">Medium</option>
+              <option value="any level">Any</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:10px;align-items:center;margin-bottom:16px">
+          <button class="btn btn-primary" id="scan-btn" onclick="runScan()">⚡ scan & score gigs</button>
+          <button class="btn btn-outline" onclick="runScan()">↺ refresh</button>
+          <span id="scan-status" style="font-family:var(--mono);font-size:11px;color:var(--muted)"></span>
+        </div>
+
+        <div class="terminal" id="terminal" style="display:none"></div>
+        <div class="gig-list" id="gig-results"></div>
+      </div>
+
+      <!-- PROPOSAL WRITER -->
+      <div class="panel" id="p-proposal">
+        <div class="grid2" style="margin-bottom:16px">
+          <div>
+            <div class="field">
+              <label class="lbl">Gig title / description</label>
+              <textarea class="inp" id="p-desc" style="min-height:110px" placeholder="Paste the gig title or full description here&#10;e.g. Write 5 SEO blog posts on digital marketing — $75, Freelancer.com"></textarea>
+            </div>
+          </div>
+          <div>
+            <div class="field">
+              <label class="lbl">Your name</label>
+              <input class="inp" id="p-name" placeholder="Your name (e.g. Rahul)">
+            </div>
+            <div class="field">
+              <label class="lbl">Tone</label>
+              <select class="inp" id="p-tone">
+                <option value="confident and professional">Professional</option>
+                <option value="friendly and warm">Friendly</option>
+                <option value="concise and direct">Direct & brief</option>
+                <option value="enthusiastic and energetic">Enthusiastic</option>
+              </select>
+            </div>
+            <div class="field">
+              <label class="lbl">Length</label>
+              <select class="inp" id="p-len">
+                <option value="under 120 words">Short (120 words)</option>
+                <option value="under 180 words">Medium (180 words)</option>
+                <option value="under 250 words">Long (250 words)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:10px;align-items:center;margin-bottom:16px">
+          <button class="btn btn-primary" id="prop-btn" onclick="genProposal()">✍ generate proposal</button>
+          <button class="btn btn-outline" id="prop-redo" onclick="genProposal()" style="display:none">↺ regenerate</button>
+          <span id="prop-status" style="font-family:var(--mono);font-size:11px;color:var(--muted)"></span>
+        </div>
+
+        <div id="prop-out" style="display:none">
+          <div class="sh">
+            <span class="sh-title">generated proposal — review before sending</span>
+            <button class="btn btn-green" onclick="copyProp(event)">copy text</button>
+          </div>
+          <div class="prop-box">
+            <div class="prop-text" id="prop-text"></div>
+          </div>
+          <div class="btn-row">
+            <button class="btn btn-ghost" onclick="tweakProposal('Make this proposal shorter — under 80 words, keep the hook and CTA')">make shorter</button>
+            <button class="btn btn-ghost" onclick="tweakProposal('Make this proposal more aggressive — faster delivery, lower price hook, stronger close')">more aggressive</button>
+            <button class="btn btn-ghost" onclick="tweakProposal('Add a one-line specific result or social proof to make it more convincing')">add proof</button>
+            <button class="btn btn-ghost" onclick="tweakProposal('Rewrite this proposal in a more casual, human tone — less corporate')">more human</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- WORK GENERATOR -->
+      <div class="panel" id="p-work">
+        <div class="grid2" style="margin-bottom:16px">
+          <div>
+            <div class="field">
+              <label class="lbl">Work type</label>
+              <select class="inp" id="w-type">
+                <option value="SEO blog post">SEO Blog Post</option>
+                <option value="product description">Product Description</option>
+                <option value="ad copy / Facebook ad">Ad Copy</option>
+                <option value="email newsletter">Email Newsletter</option>
+                <option value="LinkedIn post">LinkedIn Post</option>
+                <option value="website homepage copy">Homepage Copy</option>
+                <option value="product review article">Product Review</option>
+                <option value="data research summary">Research Summary</option>
+              </select>
+            </div>
+            <div class="field">
+              <label class="lbl">Topic / product / keyword</label>
+              <input class="inp" id="w-topic" placeholder="e.g. Best running shoes for beginners">
+            </div>
+          </div>
+          <div>
+            <div class="field">
+              <label class="lbl">Word count</label>
+              <select class="inp" id="w-words">
+                <option value="300-400 words">Short (300-400 words)</option>
+                <option value="500-700 words">Medium (500-700 words)</option>
+                <option value="800-1000 words">Long (800-1000 words)</option>
+              </select>
+            </div>
+            <div class="field">
+              <label class="lbl">Tone</label>
+              <select class="inp" id="w-tone">
+                <option value="informative and engaging">Informative</option>
+                <option value="persuasive and sales-focused">Persuasive</option>
+                <option value="casual and friendly">Casual</option>
+                <option value="professional and authoritative">Professional</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:10px;align-items:center;margin-bottom:16px">
+          <button class="btn btn-primary" id="work-btn" onclick="genWork()">🤖 generate work</button>
+          <button class="btn btn-outline" id="work-redo" onclick="genWork()" style="display:none">↺ regenerate</button>
+          <span id="work-status" style="font-family:var(--mono);font-size:11px;color:var(--muted)"></span>
+        </div>
+
+        <div id="work-out" style="display:none">
+          <div class="sh">
+            <span class="sh-title">generated deliverable — review before sending to client</span>
+            <button class="btn btn-green" onclick="copyWork(event)">copy text</button>
+          </div>
+          <div class="work-box">
+            <div class="work-text" id="work-text"></div>
+          </div>
+          <div class="btn-row">
+            <button class="btn btn-ghost" onclick="tweakWork('Make this more SEO-optimized — add keyword variations naturally')">more SEO</button>
+            <button class="btn btn-ghost" onclick="tweakWork('Make this more engaging — add a compelling hook at the start')">better hook</button>
+            <button class="btn btn-ghost" onclick="tweakWork('Make this shorter and punchier — cut unnecessary words')">make shorter</button>
+            <button class="btn btn-ghost" onclick="tweakWork('Add a clear call-to-action at the end')">add CTA</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- PROFILE -->
+      <div class="panel" id="p-profile">
+        <div class="grid3" style="margin-bottom:16px">
+          <div class="field">
+            <label class="lbl">Your full name</label>
+            <input class="inp" id="pf-name" placeholder="e.g. Rahul Sharma">
+          </div>
+          <div class="field">
+            <label class="lbl">Primary niche</label>
+            <select class="inp" id="pf-niche">
+              <option>Blog & SEO writing</option>
+              <option>Product descriptions</option>
+              <option>Copywriting & ads</option>
+              <option>Data entry & research</option>
+              <option>Python scripting</option>
+              <option>Resume writing</option>
+            </select>
+          </div>
+          <div class="field">
+            <label class="lbl">Experience level</label>
+            <select class="inp" id="pf-exp">
+              <option value="beginner but a fast learner with strong AI tools">Beginner</option>
+              <option value="intermediate with some experience">Intermediate</option>
+              <option value="experienced with proven results">Experienced</option>
+            </select>
+          </div>
+        </div>
+
+        <button class="btn btn-primary" id="pf-btn" onclick="genProfile()" style="margin-bottom:20px">generate my profile</button>
+
+        <div id="pf-out" style="display:none">
+          <div class="card-lg" style="margin-bottom:16px">
+            <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px">
+              <div class="avatar" id="pf-avatar">?</div>
+              <div>
+                <div style="font-size:18px;font-weight:600" id="pf-name-out"></div>
+                <div style="font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:2px" id="pf-headline"></div>
+                <div style="font-family:var(--mono);font-size:11px;color:var(--green);margin-top:2px" id="pf-rate"></div>
+              </div>
+            </div>
+            <div style="font-family:var(--mono);font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Profile bio</div>
+            <div style="background:var(--s3);border-radius:7px;padding:14px;font-size:13px;line-height:1.8;color:var(--text)" id="pf-bio"></div>
+            <div style="margin-top:16px">
+              <div style="font-family:var(--mono);font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Skills to list</div>
+              <div id="pf-skills"></div>
+            </div>
+          </div>
+          <div class="btn-row">
+            <button class="btn btn-ghost" onclick="extraProfile('Write a 10-word Freelancer.com headline for my niche — punchy, specific, value-focused')">get headline ↗</button>
+            <button class="btn btn-ghost" onclick="extraProfile('Write 3 short portfolio item descriptions for a freelance writer with no client work yet')">portfolio items ↗</button>
+            <button class="btn btn-ghost" onclick="extraProfile('What profile photo style works best for freelancers on Fiverr and Freelancer.com?')">photo tips ↗</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- SETUP CHECKLIST -->
+      <div class="panel" id="p-setup">
+        <div class="sh">
+          <span class="sh-title">launch checklist — complete these to go live</span>
+          <span id="done-count" style="font-family:var(--mono);font-size:11px;color:var(--muted)">0 / 10 done</span>
+        </div>
+        <div id="checklist"></div>
+        <div class="btn-row" style="margin-top:16px">
+          <button class="btn btn-ghost" onclick="alert('Go to Freelancer.com → Register → use your real name and email → verify phone')">how to create account ↗</button>
+          <button class="btn btn-ghost" onclick="nav('profile',null)">generate my profile ↗</button>
+        </div>
+      </div>
+
+      <!-- EARNINGS -->
+      <div class="panel" id="p-earnings">
+        <div class="grid4" style="margin-bottom:24px">
+          <div class="kpi c-green">
+            <div class="kpi-val">$<span id="e-today">0</span></div>
+            <div class="kpi-lbl">Today</div>
+          </div>
+          <div class="kpi c-accent">
+            <div class="kpi-val">$<span id="e-week">0</span></div>
+            <div class="kpi-lbl">This week</div>
+          </div>
+          <div class="kpi c-purple">
+            <div class="kpi-val">$<span id="e-month">0</span></div>
+            <div class="kpi-lbl">This month</div>
+          </div>
+          <div class="kpi c-amber">
+            <div class="kpi-val" id="e-pct">0%</div>
+            <div class="kpi-lbl">Goal progress</div>
+          </div>
+        </div>
+
+        <div class="grid2">
+          <div class="card-lg">
+            <div class="sh"><span class="sh-title">log a payment received</span></div>
+            <div class="field"><label class="lbl">Amount ($)</label><input class="inp" type="number" id="earn-amt" placeholder="e.g. 75"></div>
+            <div class="field"><label class="lbl">Gig description</label><input class="inp" id="earn-desc" placeholder="e.g. 5 SEO blog posts"></div>
+            <button class="btn btn-green" onclick="logEarning()" style="margin-top:4px">+ log payment</button>
+          </div>
+          <div class="card-lg">
+            <div class="sh"><span class="sh-title">earnings history</span></div>
+            <div id="earn-hist"><div class="empty" style="padding:20px">No earnings logged yet</div></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+const API = "https://api.anthropic.com/v1/messages";
+const MODEL = "claude-sonnet-4-20250514";
+
+let state = {
+  scanned: 0, proposals: 0, wins: 0,
+  earned: 0, monthEarned: 0,
+  gigs: [], earnings: [],
+  checks: JSON.parse(localStorage.getItem('gig_checks') || '[]')
+};
+
+const TITLES = {
+  dashboard:'Dashboard', scanner:'Job Scanner', proposal:'Proposal Writer',
+  work:'Work Generator', profile:'My Profile', setup:'Setup Checklist', earnings:'Earnings'
+};
+
+function nav(id, el) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('on'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('p-' + id).classList.add('on');
+  if (el) el.classList.add('active');
+  else {
+    document.querySelectorAll('.nav-item').forEach(n => {
+      if (n.getAttribute('onclick') && n.getAttribute('onclick').includes("'"+id+"'")) n.classList.add('active');
+    });
+  }
+  document.getElementById('page-title').textContent = TITLES[id] || id;
+}
+
+// Clock
+setInterval(() => {
+  document.getElementById('clock').textContent = new Date().toLocaleTimeString('en-IN', {hour12: false});
+}, 1000);
+
+function addLog(msg, color) {
+  const el = document.getElementById('d-log');
+  const now = new Date().toLocaleTimeString('en-IN', {hour12: false, hour: '2-digit', minute: '2-digit'});
+  const d = document.createElement('div');
+  d.className = 'log-item';
+  d.innerHTML = `<span class="log-time">${now}</span><span class="log-dot" style="background:${color || 'var(--green)'}"></span><span>${msg}</span>`;
+  el.insertBefore(d, el.firstChild);
+  if (el.children.length > 7) el.lastChild.remove();
+}
+
+function updateDash() {
+  document.getElementById('d-earned').textContent = state.earned;
+  document.getElementById('d-scanned').textContent = state.scanned;
+  document.getElementById('d-props').textContent = state.proposals;
+  document.getElementById('d-wins').textContent = state.wins;
+  document.getElementById('d-month').textContent = state.monthEarned;
+  const pct = Math.min(100, Math.round(state.monthEarned / 10));
+  document.getElementById('d-mprog').style.width = pct + '%';
+  document.getElementById('top-earned').textContent = state.earned;
+  document.getElementById('sb-earned').textContent = state.monthEarned;
+  document.getElementById('sb-fill').style.width = pct + '%';
+  document.getElementById('sb-pct').textContent = pct + '%';
+  document.getElementById('e-today').textContent = state.earned;
+  document.getElementById('e-week').textContent = state.monthEarned;
+  document.getElementById('e-month').textContent = state.monthEarned;
+  document.getElementById('e-pct').textContent = pct + '%';
+}
+
+// TERMINAL
+function termClear() {
+  const t = document.getElementById('terminal');
+  t.style.display = 'block'; t.innerHTML = '';
+}
+function termLine(txt, cls) {
+  const t = document.getElementById('terminal');
+  const d = document.createElement('div');
+  d.className = 'tline' + (cls ? ' ' + cls : '');
+  d.textContent = '> ' + txt;
+  d.style.animationDelay = (t.children.length * 0.07) + 's';
+  t.appendChild(d); t.scrollTop = t.scrollHeight;
+}
+const wait = ms => new Promise(r => setTimeout(r, ms));
+
+// SCANNER
+async function runScan() {
+  const niche = document.getElementById('s-niche').value;
+  const budget = document.getElementById('s-budget').value;
+  const comp = document.getElementById('s-comp').value;
+  const btn = document.getElementById('scan-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> scanning...';
+  document.getElementById('scan-status').textContent = '';
+  document.getElementById('gig-results').innerHTML = '';
+  termClear();
+
+  termLine('initializing scanner', 't-m');
+  await wait(200); termLine('niche: ' + niche, 't-m');
+  await wait(150); termLine('budget: $' + budget + '+', 't-m');
+  await wait(150); termLine('connecting to gig database...', 't-w');
+  await wait(400); termLine('scanning Freelancer.com / PeoplePerHour / Guru...');
+  await wait(500); termLine('running AI scoring engine...');
+  await wait(350); termLine('ranking by win probability...');
+  await wait(300);
+
+  try {
+    const res = await fetch(API, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        model: MODEL, max_tokens: 1400,
+        messages: [{role: 'user', content: `You are a freelance gig scanner. Generate exactly 8 realistic freelance job listings for the niche: "${niche}". Min budget $${budget}. Competition: ${comp}.
+
+Return ONLY a raw JSON array. No markdown, no code blocks, no explanation:
+[{"title":"gig title","platform":"Freelancer.com","budget":75,"budgetType":"Fixed","bids":7,"clientRating":4.8,"score":91,"tags":["tag1","tag2"],"reason":"one sentence why this is a great opportunity"}]
+
+Rules: budgets $${budget}-$250, scores 62-97, good mix of high/medium scores, bids realistic for competition level, tags specific to the niche. Platforms: mix of Freelancer.com / PeoplePerHour / Guru.com.`}]
+      })
+    });
+    const data = await res.json();
+    const raw = data.content[0].text.trim().replace(/```json|```/g, '').trim();
+    const gigs = JSON.parse(raw);
+    state.gigs = gigs;
+    state.scanned += gigs.length;
+    termLine('found ' + gigs.length + ' gigs — scoring done', 't-a');
+    await wait(200);
+    termLine('rendering results...', 't-m');
+    renderGigs(gigs);
+    document.getElementById('scan-status').textContent = gigs.length + ' gigs found';
+    updatePipeline(gigs);
+    addLog('Scanner found ' + gigs.length + ' gigs for: ' + niche.split(' ')[0]);
+    updateDash();
+  } catch (e) {
+    termLine('using sample data — check API key if persistent', 't-w');
+    const sample = fallbackGigs(niche, budget);
+    state.gigs = sample; state.scanned += sample.length;
+    renderGigs(sample); updatePipeline(sample); updateDash();
+  }
+
+  btn.disabled = false; btn.innerHTML = '⚡ scan & score gigs';
+}
+
+function fallbackGigs(niche, budget) {
+  return [
+    {title: 'Write 5 SEO articles on ' + niche, platform: 'Freelancer.com', budget: 75, budgetType: 'Fixed', bids: 6, clientRating: 4.9, score: 94, tags: [niche.split(' ')[0], 'SEO'], reason: 'Low competition, verified client, fast payment history'},
+    {title: 'Monthly content retainer — 8 pieces', platform: 'PeoplePerHour', budget: 200, budgetType: 'Monthly', bids: 3, clientRating: 4.8, score: 90, tags: ['retainer', 'content'], reason: 'Recurring monthly income, highest budget'},
+    {title: 'Product page content — e-commerce store', platform: 'Guru.com', budget: 60, budgetType: 'Fixed', bids: 8, clientRating: 4.7, score: 83, tags: ['ecommerce', 'content'], reason: 'Active client, straightforward brief'},
+  ];
+}
+
+function renderGigs(gigs) {
+  const el = document.getElementById('gig-results');
+  el.innerHTML = '';
+  gigs.forEach((g, i) => {
+    const cls = g.score >= 85 ? '' : g.score >= 70 ? 'mid' : 'low';
+    const card = document.createElement('div');
+    card.className = 'gig-card';
+    card.style.animationDelay = (i * 0.06) + 's';
+    card.innerHTML = `
+      <div class="score-ring ${cls}">${g.score}</div>
+      <div class="gig-body">
+        <div class="gig-title">${g.title}</div>
+        <div class="gig-meta">
+          <span>${g.platform}</span><span>${g.budgetType}</span>
+          <span>${g.bids} bids</span><span>★ ${g.clientRating}</span>
+          ${(g.tags || []).map(t => `<span class="tag">${t}</span>`).join('')}
+        </div>
+        <div class="gig-reason">${g.reason || ''}</div>
+      </div>
+      <div class="gig-right">
+        <div class="gig-price">$${g.budget}</div>
+        <button class="btn btn-outline" style="font-size:10px;padding:5px 12px" onclick='prefill(${JSON.stringify(g).replace(/'/g,"&#39;")})'>write proposal</button>
+      </div>`;
+    el.appendChild(card);
+  });
+}
+
+function updatePipeline(gigs) {
+  const el = document.getElementById('d-pipeline');
+  el.innerHTML = '';
+  gigs.slice(0, 5).forEach(g => {
+    const cls = g.score >= 85 ? '' : g.score >= 70 ? 'mid' : 'low';
+    const d = document.createElement('div');
+    d.className = 'gig-card';
+    d.innerHTML = `<div class="score-ring ${cls}">${g.score}</div><div class="gig-body"><div class="gig-title">${g.title}</div><div class="gig-meta"><span>${g.platform}</span><span>$${g.budget}</span></div></div><button class="btn btn-outline" style="font-size:10px;padding:5px 14px;flex-shrink:0" onclick='prefill(${JSON.stringify(g).replace(/'/g,"&#39;")})'>write proposal</button>`;
+    el.appendChild(d);
+  });
+}
+
+function prefill(g) {
+  nav('proposal', null);
+  document.getElementById('p-desc').value = `${g.title} — Budget: $${g.budget} (${g.budgetType}) on ${g.platform}`;
+  document.getElementById('prop-out').style.display = 'none';
+  document.getElementById('prop-redo').style.display = 'none';
+}
+
+// PROPOSAL
+async function genProposal() {
+  const desc = document.getElementById('p-desc').value.trim();
+  const name = document.getElementById('p-name').value.trim() || 'a skilled freelancer';
+  const tone = document.getElementById('p-tone').value;
+  const len = document.getElementById('p-len').value;
+  if (!desc) { alert('Enter a gig description first'); return; }
+
+  const btn = document.getElementById('prop-btn');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> writing...';
+  document.getElementById('prop-status').textContent = 'AI is crafting your proposal...';
+  document.getElementById('prop-out').style.display = 'none';
+
+  try {
+    const res = await fetch(API, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        model: MODEL, max_tokens: 500,
+        messages: [{role: 'user', content: `Write a freelance proposal for this gig: "${desc}"
+Writer: ${name} | Tone: ${tone} | Length: ${len}
+
+Rules: Start with something specific about THEIR project (never "Hi, I am..."), mention relevant skill naturally, state clear deliverable + realistic timeline, soft call to action at end. No emojis, no bullet points, flowing prose only. Sound human, not AI. Write ONLY the proposal text, nothing else.`}]
+      })
+    });
+    const data = await res.json();
+    const text = data.content[0].text.trim();
+    document.getElementById('prop-text').textContent = text;
+    document.getElementById('prop-out').style.display = 'block';
+    document.getElementById('prop-redo').style.display = 'inline-flex';
+    state.proposals++;
+    addLog('Proposal written for: ' + desc.substring(0, 35) + '...', 'var(--purple)');
+    updateDash();
+  } catch (e) {
+    document.getElementById('prop-text').textContent = 'Error generating proposal — please try again.';
+    document.getElementById('prop-out').style.display = 'block';
+  }
+
+  btn.disabled = false; btn.innerHTML = '✍ generate proposal';
+  document.getElementById('prop-status').textContent = '';
+}
+
+function copyProp(e) {
+  navigator.clipboard.writeText(document.getElementById('prop-text').textContent).then(() => {
+    e.target.textContent = 'copied!';
+    setTimeout(() => e.target.textContent = 'copy text', 1500);
+  });
+}
+
+function tweakProposal(instruction) {
+  const current = document.getElementById('prop-text').textContent;
+  document.getElementById('p-desc').value = `CURRENT PROPOSAL:\n${current}\n\nINSTRUCTION: ${instruction}`;
+  genProposal();
+}
+
+// WORK GENERATOR
+async function genWork() {
+  const type = document.getElementById('w-type').value;
+  const topic = document.getElementById('w-topic').value.trim();
+  const words = document.getElementById('w-words').value;
+  const tone = document.getElementById('w-tone').value;
+  if (!topic) { alert('Enter a topic or keyword first'); return; }
+
+  const btn = document.getElementById('work-btn');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> generating...';
+  document.getElementById('work-status').textContent = 'AI is creating your deliverable...';
+  document.getElementById('work-out').style.display = 'none';
+
+  try {
+    const res = await fetch(API, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        model: MODEL, max_tokens: 1200,
+        messages: [{role: 'user', content: `Write a ${type} about: "${topic}". Length: ${words}. Tone: ${tone}.
+
+Requirements: high quality, ready to deliver to a freelance client. Engaging, well-structured, no filler. Sound like a professional human writer. Include a title if appropriate. Write only the content — no preamble or explanation.`}]
+      })
+    });
+    const data = await res.json();
+    const text = data.content[0].text.trim();
+    document.getElementById('work-text').textContent = text;
+    document.getElementById('work-out').style.display = 'block';
+    document.getElementById('work-redo').style.display = 'inline-flex';
+    addLog('Work generated: ' + type + ' — ' + topic.substring(0, 30), 'var(--accent)');
+  } catch (e) {
+    document.getElementById('work-text').textContent = 'Error — please try again.';
+    document.getElementById('work-out').style.display = 'block';
+  }
+
+  btn.disabled = false; btn.innerHTML = '🤖 generate work';
+  document.getElementById('work-status').textContent = '';
+}
+
+function copyWork(e) {
+  navigator.clipboard.writeText(document.getElementById('work-text').textContent).then(() => {
+    e.target.textContent = 'copied!';
+    setTimeout(() => e.target.textContent = 'copy text', 1500);
+  });
+}
+
+function tweakWork(instruction) {
+  const current = document.getElementById('work-text').textContent;
+  const topic = document.getElementById('w-topic').value;
+  document.getElementById('w-topic').value = `EXISTING CONTENT:\n${current.substring(0, 400)}...\n\nINSTRUCTION: ${instruction}\n\nOriginal topic: ${topic}`;
+  genWork();
+}
+
+// PROFILE
+async function genProfile() {
+  const name = document.getElementById('pf-name').value.trim() || 'Freelancer';
+  const niche = document.getElementById('pf-niche').value;
+  const exp = document.getElementById('pf-exp').value;
+  const btn = document.getElementById('pf-btn');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> generating...';
+
+  try {
+    const res = await fetch(API, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        model: MODEL, max_tokens: 600,
+        messages: [{role: 'user', content: `Create a complete freelance profile for Freelancer.com and PeoplePerHour.
+Name: ${name} | Niche: ${niche} | Experience: ${exp}
+
+Return ONLY raw JSON (no markdown, no code blocks):
+{"headline":"under 10 words, punchy value proposition","bio":"3 sentences, professional, first person, human-sounding","skills":["skill1","skill2","skill3","skill4","skill5","skill6"],"rate":"$X-Y/hr","tagline":"one line catchphrase"}`}]
+      })
+    });
+    const data = await res.json();
+    const raw = data.content[0].text.trim().replace(/```json|```/g, '').trim();
+    const pf = JSON.parse(raw);
+    const initials = name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2) || 'ME';
+    document.getElementById('pf-avatar').textContent = initials;
+    document.getElementById('pf-name-out').textContent = name;
+    document.getElementById('pf-headline').textContent = pf.headline;
+    document.getElementById('pf-rate').textContent = pf.rate;
+    document.getElementById('pf-bio').textContent = pf.bio;
+    document.getElementById('pf-skills').innerHTML = (pf.skills || []).map(s => `<span class="skill-chip">${s}</span>`).join('');
+    document.getElementById('pf-out').style.display = 'block';
+    addLog('Profile generated for ' + name, 'var(--purple)');
+  } catch (e) { alert('Error — try again'); }
+
+  btn.disabled = false; btn.textContent = 'generate my profile';
+}
+
+function extraProfile(q) { alert('Open the chat and ask: ' + q); }
+
+// EARNINGS
+function logEarning() {
+  const amt = parseFloat(document.getElementById('earn-amt').value);
+  const desc = document.getElementById('earn-desc').value.trim();
+  if (!amt || !desc) { alert('Enter amount and description'); return; }
+
+  state.earned += amt; state.monthEarned += amt; state.wins++;
+  const now = new Date().toLocaleDateString('en-IN');
+  state.earnings.unshift({amt, desc, date: now});
+
+  const el = document.getElementById('earn-hist');
+  el.innerHTML = state.earnings.map(e => `
+    <div class="stat-row">
+      <span class="stat-label">${e.date} — ${e.desc}</span>
+      <span class="stat-val" style="color:var(--green)">+$${e.amt}</span>
+    </div>`).join('');
+
+  addLog('Payment logged: $' + amt + ' for ' + desc, 'var(--green)');
+  updateDash();
+  document.getElementById('earn-amt').value = '';
+  document.getElementById('earn-desc').value = '';
+}
+
+// CHECKLIST
+const TASKS = [
+  {text: 'Create Freelancer.com account (free)', badge: 'cb-now', label: 'do now'},
+  {text: 'Create PeoplePerHour account (free)', badge: 'cb-now', label: 'do now'},
+  {text: 'Generate your profile bio (My Profile tab)', badge: 'cb-now', label: 'do now'},
+  {text: 'Add profile photo — real or professional avatar', badge: 'cb-now', label: 'do now'},
+  {text: 'Run your first job scan (Job Scanner tab)', badge: 'cb-now', label: 'do now'},
+  {text: 'Send 10 proposals today using Proposal Writer', badge: 'cb-now', label: 'do now'},
+  {text: 'Link UPI / bank account for payouts on both platforms', badge: 'cb-now', label: 'do now'},
+  {text: 'Submit first gig — even $15-20 to get your first review', badge: 'cb-soon', label: 'this week'},
+  {text: 'Get 1st 5-star review — ask client directly after delivery', badge: 'cb-soon', label: 'this week'},
+  {text: 'Scale to 15+ proposals/day once you have 2+ reviews', badge: 'cb-later', label: 'week 2+'},
+];
+
+function buildChecklist() {
+  const el = document.getElementById('checklist');
+  TASKS.forEach((t, i) => {
+    const done = state.checks.includes(i);
+    const d = document.createElement('div');
+    d.className = 'check-item' + (done ? ' done' : '');
+    d.onclick = () => toggleCheck(i, d);
+    d.innerHTML = `<div class="check-box">${done ? '✓' : ''}</div><span class="check-step">step ${i + 1}</span><span class="check-text">${t.text}</span><span class="cbadge ${t.badge}">${t.label}</span>`;
+    el.appendChild(d);
+  });
+  updateCheckCount();
+}
+
+function toggleCheck(i, el) {
+  const idx = state.checks.indexOf(i);
+  if (idx > -1) state.checks.splice(idx, 1); else state.checks.push(i);
+  localStorage.setItem('gig_checks', JSON.stringify(state.checks));
+  el.classList.toggle('done');
+  el.querySelector('.check-box').textContent = state.checks.includes(i) ? '✓' : '';
+  updateCheckCount();
+}
+
+function updateCheckCount() {
+  const n = state.checks.length;
+  document.getElementById('done-count').textContent = n + ' / ' + TASKS.length + ' done';
+  document.getElementById('todo-count').textContent = (TASKS.length - n) || '✓';
+}
+
+buildChecklist();
+updateDash();
+</script>
+</body>
+</html>
